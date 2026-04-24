@@ -29,19 +29,6 @@ constexpr uint8_t PIN_WIND = 21;          // Analog A7
 // Twilight / ambient light sensor analog input
 constexpr uint8_t PIN_TWILIGHT = 22;      // Analog A8
 
-// Pin motor H-bridge direction + enable pins (4 motors)
-constexpr uint8_t PIN_MOTOR_DIR_A_0 = 3;  // Motor 0 direction A
-constexpr uint8_t PIN_MOTOR_DIR_B_0 = 4;  // Motor 0 direction B
-constexpr uint8_t PIN_MOTOR_EN_0    = 5;  // Motor 0 enable / PWM speed
-constexpr uint8_t PIN_MOTOR_DIR_A_1 = 6;  // Motor 1 direction A
-constexpr uint8_t PIN_MOTOR_DIR_B_1 = 7;  // Motor 1 direction B
-constexpr uint8_t PIN_MOTOR_EN_1    = 8;  // Motor 1 enable / PWM speed
-constexpr uint8_t PIN_MOTOR_DIR_A_2 = 9;  // Motor 2 direction A
-constexpr uint8_t PIN_MOTOR_DIR_B_2 = 10; // Motor 2 direction B
-constexpr uint8_t PIN_MOTOR_EN_2    = 11; // Motor 2 enable / PWM speed
-constexpr uint8_t PIN_MOTOR_DIR_A_3 = 12; // Motor 3 direction A
-constexpr uint8_t PIN_MOTOR_DIR_B_3 = 24; // Motor 3 direction B
-constexpr uint8_t PIN_MOTOR_EN_3    = 25; // Motor 3 enable / PWM speed
 
 // ============================================================================
 // PWM / ESC Configuration
@@ -152,8 +139,8 @@ constexpr float    TILT_PID_KP          = 8.0f;
 constexpr float    TILT_PID_KI          = 0.5f;
 constexpr float    TILT_PID_KD          = 1.2f;
 constexpr float    TILT_PID_KAW         = 0.1f;     // Anti-windup gain
-constexpr uint16_t TILT_PID_OUT_MIN     = 1000;     // = PWM_PULSE_MIN_US
-constexpr uint16_t TILT_PID_OUT_MAX     = 2000;     // = PWM_PULSE_MAX_US
+constexpr uint16_t TILT_PID_OUT_MIN     = 1100;     // = PWM_PULSE_MIN_US
+constexpr uint16_t TILT_PID_OUT_MAX     = 1900;     // = PWM_PULSE_MAX_US
 constexpr float    TILT_PID_DEADBAND_DEG = 0.5f;
 
 // ============================================================================
@@ -170,5 +157,32 @@ constexpr uint32_t MODE_HOLD_DURATION_MS = 120000;  // 2 min hysteresis
 constexpr float TWILIGHT_THRESHOLD    = 0.1f;
 constexpr float TILT_NIGHT_RESET_DEG  = 0.0f;
 constexpr float TILT_WIND_SAFE_DEG    = 0.0f;
+
+// ============================================================================
+// Pin Extender Node
+// ============================================================================
+
+constexpr uint8_t  PIN_CMD_BUTTON          = 8;     // Command button: INPUT_PULLUP, active LOW
+constexpr uint8_t  PIN_TILT_MOTOR_PWM     = 9;     // Tilt motor PWM to ESC
+constexpr uint8_t  PIN_EXTENDER_PWM       = 4;     // Extender 1: servo PWM to ESC
+constexpr uint8_t  PIN_EXTENDER_LIMIT     = 5;     // Extender 1: limit switch (INPUT_PULLUP, active LOW)
+constexpr uint8_t  PIN_EXTENDER2_PWM      = 6;     // Extender 2: servo PWM to ESC
+constexpr uint8_t  PIN_EXTENDER2_LIMIT    = 7;     // Extender 2: limit switch (INPUT_PULLUP, active LOW)
+constexpr uint16_t EXTENDER_PULSE_ARM_US  = 1500;   // Arm ESC / stop
+constexpr uint16_t EXTENDER_PULSE_FWD_US  = 1000;   // Forward (extend)
+constexpr uint16_t EXTENDER_PULSE_REV_US  = 2000;   // Reverse (retract)
+constexpr uint16_t EXTENDER_PULSE_STOP_US = 1500;   // Stop
+constexpr uint32_t EXTENDER_ARM_MS        = 2000;   // Hold arm pulse for 2 s
+constexpr uint32_t EXTENDER_TIMEOUT_MS    = 120000; // Safety cutoff: 2 min max extension
+constexpr uint32_t EXTENDER_RETRACT_MS    = 30000;  // Retract duration after button press
+
+// Tilt motor pulse widths (wing deploy node)
+constexpr uint16_t TILT_MOTOR_PULSE_LEFT_US   = 1200; // Tilt left
+constexpr uint16_t TILT_MOTOR_PULSE_RIGHT_US  = 1800; // Tilt right
+constexpr uint16_t TILT_MOTOR_PULSE_STOP_US   = 1503; // Stop / neutral
+constexpr uint16_t TILT_ARM_PULSE_HIGH_US     = 1503; // Arm phase 1: above neutral
+constexpr uint16_t TILT_ARM_PULSE_LOW_US      = 1475; // Arm phase 2: below neutral
+constexpr uint32_t TILT_ARM_PHASE1_MS         = 2000; // Hold high pulse for 2 s
+constexpr uint32_t TILT_ARM_PHASE2_MS         = 1500; // Hold low pulse for 1.5 s
 
 #endif // CONFIG_H
