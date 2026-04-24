@@ -185,4 +185,12 @@ constexpr uint16_t TILT_ARM_PULSE_LOW_US      = 1475; // Arm phase 2: below neut
 constexpr uint32_t TILT_ARM_PHASE1_MS         = 2000; // Hold high pulse for 2 s
 constexpr uint32_t TILT_ARM_PHASE2_MS         = 1500; // Hold low pulse for 1.5 s
 
+// ============================================================================
+// XM125 Distance Sensor
+// ============================================================================
+
+constexpr uint32_t DISTANCE_BEGIN_MM  = 300;   // Min range (mm)
+constexpr uint32_t DISTANCE_END_MM    = 7000;  // Max range (mm)
+constexpr uint32_t DISTANCE_SAMPLE_MS = 500;   // Polling interval
+
 #endif // CONFIG_H
