@@ -135,7 +135,7 @@ constexpr uint32_t TRACKING_INTERVAL_MS = 900000;   // 15 min target computation
 // Tilt PID Controller
 // ============================================================================
 
-constexpr float    TILT_PID_KP          = 8.0f;
+constexpr float    TILT_PID_KP          = 30.0f;
 constexpr float    TILT_PID_KI          = 0.5f;
 constexpr float    TILT_PID_KD          = 1.2f;
 constexpr float    TILT_PID_KAW         = 0.1f;     // Anti-windup gain
