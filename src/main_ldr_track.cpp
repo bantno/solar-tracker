@@ -6,15 +6,22 @@
 // Swap A/B wires or negate SENSOR_TRACK_GAIN in config if motor runs backwards.
 
 #include <Arduino.h>
+#include <SD.h>
 #include "config/config.h"
 #include "hal/hal_greenjay_esc.h"
+#include "hal/hal_as5600.h"
 
-static constexpr uint8_t LDR_PIN_A   = A0;
-static constexpr uint8_t LDR_PIN_B   = A1;
-static constexpr float   LDR_R_FIXED = 10000.0f;
-static constexpr int     LDR_ADC_MAX = 4095;
+static constexpr uint8_t  LDR_PIN_A   = A0;
+static constexpr uint8_t  LDR_PIN_B   = A1;
+static constexpr float    LDR_R_FIXED = 10000.0f;
+static constexpr int      LDR_ADC_MAX = 4095;
+static constexpr uint32_t LOG_MS      = 30000;
+static constexpr char     LOG_FILE[]  = "encoder_log.csv";
+
+static bool sdReady = false;
 
 static HalGreenJayEsc wingEsc(PIN_ESC_PWM);
+static HalAs5600    encoder;
 
 // ---------------------------------------------------------------------------
 // LDR resistance helper (identical to main_ldr_compare)
@@ -57,6 +64,28 @@ static uint16_t pidUpdate(float error_deg, float dt_s) {
 }
 
 // ---------------------------------------------------------------------------
+// SD logging helpers
+// ---------------------------------------------------------------------------
+static void logEncoderToSD(uint32_t t_ms,
+                           uint16_t rawCounts,
+                           float angleDeg,
+                           float error_deg,
+                           uint16_t pulse) {
+    File f = SD.open(LOG_FILE, FILE_WRITE);
+    if (!f) {
+        Serial.println("[SD] open failed");
+        return;
+    }
+    f.printf("%lu,%u,%.2f,%+.2f,%u\n",
+             t_ms / 1000,
+             rawCounts,
+             angleDeg,
+             error_deg,
+             pulse);
+    f.close();
+}
+
+// ---------------------------------------------------------------------------
 // Arduino entry points
 // ---------------------------------------------------------------------------
 void setup() {
@@ -70,11 +99,31 @@ void setup() {
 
     analogReadResolution(12);
     wingEsc.init();
+
+    bool encoderReady = encoder.init();
+    if (!encoderReady) {
+        Serial.println("[AS5600] encoder init failed");
+    }
+
+    sdReady = SD.begin(BUILTIN_SDCARD);
+    if (sdReady) {
+        if (!SD.exists(LOG_FILE)) {
+            File f = SD.open(LOG_FILE, FILE_WRITE);
+            if (f) {
+                f.println("t_s,raw_counts,angle_deg,error_deg,pulse_us");
+                f.close();
+            }
+        }
+        Serial.println("[SD] ready");
+    } else {
+        Serial.println("[SD] not found — logging disabled");
+    }
 }
 
 void loop() {
     static uint32_t lastLoopMs  = 0;
     static uint32_t lastPrintMs = 0;
+    static uint32_t lastLogMs   = 0;
     static uint32_t prevMs      = 0;
 
     uint32_t now = millis();
@@ -90,9 +139,11 @@ void loop() {
     prevMs     = now;
     lastLoopMs = now;
 
-    int   rawA      = analogRead(LDR_PIN_A);
-    int   rawB      = analogRead(LDR_PIN_B);
-    float error_deg = static_cast<float>(rawA - rawB) * SENSOR_TRACK_GAIN;
+    int      rawA      = analogRead(LDR_PIN_A);
+    int      rawB      = analogRead(LDR_PIN_B);
+    float    error_deg = static_cast<float>(rawA - rawB) * SENSOR_TRACK_GAIN;
+    float    angleDeg  = encoder.readAngleDegrees();
+    uint16_t rawCounts = encoder.readRawCounts();
 
     uint16_t pulse = pidUpdate(error_deg, dt_s);
     wingEsc.setPulseWidth(pulse);
@@ -106,5 +157,11 @@ void loop() {
                                                                        : "=> tilt left";
         Serial.printf("A:%4d(%.0f ohm)  B:%4d(%.0f ohm)  err:%+.2f deg  pulse:%d us  %s\n",
                       rawA, rA, rawB, rB, error_deg, pulse, status);
+        Serial.printf("  Encoder: raw=%u  angle=%.2f deg\n", rawCounts, angleDeg);
+    }
+
+    if (sdReady && (now - lastLogMs >= LOG_MS)) {
+        lastLogMs = now;
+        logEncoderToSD(now, rawCounts, angleDeg, error_deg, pulse);
     }
 }
