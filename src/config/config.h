@@ -135,13 +135,13 @@ constexpr uint32_t TRACKING_INTERVAL_MS = 900000;   // 15 min target computation
 // Tilt PID Controller
 // ============================================================================
 
-constexpr float    TILT_PID_KP          = 5.0f;
-constexpr float    TILT_PID_KI          = 0.1f;
+constexpr float    TILT_PID_KP          = 0.2f;
+constexpr float    TILT_PID_KI          = 0.01f;
 constexpr float    TILT_PID_KD          = 0.0f;
-constexpr float    TILT_PID_KAW         = 1.1f;     // Anti-windup gain
+constexpr float    TILT_PID_KAW         = 0.0f;     // Anti-windup gain
 constexpr uint16_t TILT_PID_OUT_MIN     = 1100;     // = PWM_PULSE_MIN_US
 constexpr uint16_t TILT_PID_OUT_MAX     = 1900;     // = PWM_PULSE_MAX_US
-constexpr float    TILT_PID_DEADBAND_DEG = 0.5f;
+constexpr float    TILT_PID_DEADBAND_DEG = 0.01f;
 
 // ============================================================================
 // Hybrid Tracker
