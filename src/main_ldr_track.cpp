@@ -15,7 +15,7 @@ static constexpr uint8_t  LDR_PIN_A   = A0;
 static constexpr uint8_t  LDR_PIN_B   = A1;
 static constexpr float    LDR_R_FIXED = 10000.0f;
 static constexpr int      LDR_ADC_MAX = 4095;
-static constexpr uint32_t LOG_MS      = 30000;
+static constexpr uint32_t LOG_MS      = 100;
 static constexpr char     LOG_FILE[]  = "encoder_log.csv";
 
 static bool sdReady = false;
@@ -76,12 +76,21 @@ static void logEncoderToSD(uint32_t t_ms,
         Serial.println("[SD] open failed");
         return;
     }
-    f.printf("%lu,%u,%.2f,%+.2f,%u\n",
-             t_ms / 1000,
-             rawCounts,
-             angleDeg,
-             error_deg,
-             pulse);
+    if constexpr (LOG_MS < 1000) {
+        f.printf("%.2f,%u,%.2f,%+.2f,%u\n",
+                 t_ms / 1000.0f,
+                 rawCounts,
+                 angleDeg,
+                 error_deg,
+                 pulse);
+    } else {
+        f.printf("%lu,%u,%.2f,%+.2f,%u\n",
+                 t_ms / 1000,
+                 rawCounts,
+                 angleDeg,
+                 error_deg,
+                 pulse);
+    }
     f.close();
 }
 
