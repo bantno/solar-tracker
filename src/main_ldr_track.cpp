@@ -10,26 +10,23 @@
 #include "config/config.h"
 #include "hal/hal_greenjay_esc.h"
 #include "hal/hal_as5600.h"
+#include "hal/hal_ldr.h"
 
-static constexpr uint8_t  LDR_PIN_A   = A0;
-static constexpr uint8_t  LDR_PIN_B   = A1;
-static constexpr float    LDR_R_FIXED = 10000.0f;
-static constexpr int      LDR_ADC_MAX = 4095;
-static constexpr uint32_t LOG_MS      = 100;
-static constexpr char     LOG_FILE[]  = "encoder_log.csv";
+static constexpr uint32_t LOG_MS    = 100;
+static constexpr char     LOG_FILE[] = "encoder_log.csv";
 
 static bool sdReady = false;
 
 static HalGreenJayEsc wingEsc(PIN_ESC_PWM);
-static HalAs5600    encoder;
+static HalAs5600      encoder;
 
 // ---------------------------------------------------------------------------
-// LDR resistance helper (identical to main_ldr_compare)
+// LDR resistance helper — calibrated via power-law fit (R = A * L^-gamma)
+// LDR 1 (A0, black wire): A=4.8641e5, gamma=0.5882  R²=0.9885
+// LDR 2 (A1, red wire):   A=2.7794e5, gamma=0.4798  R²=0.9938
 // ---------------------------------------------------------------------------
-static float ldrResistance(int adc) {
-    if (adc == 0) return 1e9f;
-    return LDR_R_FIXED * (LDR_ADC_MAX - adc) / static_cast<float>(adc);
-}
+static HalLdr ldrA(A0, 4.8641e5f, 0.5882f);
+static HalLdr ldrB(A1, 2.7794e5f, 0.4798f);
 
 // ---------------------------------------------------------------------------
 // PID — error in degrees (ADC diff * SENSOR_TRACK_GAIN)
@@ -148,8 +145,8 @@ void loop() {
     prevMs     = now;
     lastLoopMs = now;
 
-    int      rawA      = analogRead(LDR_PIN_A);
-    int      rawB      = analogRead(LDR_PIN_B);
+    int      rawA      = ldrA.read();
+    int      rawB      = ldrB.read();
     float    error_deg = static_cast<float>(rawA - rawB) * SENSOR_TRACK_GAIN;
     float    angleDeg  = encoder.readAngleDegrees();
     uint16_t rawCounts = encoder.readRawCounts();
@@ -159,13 +156,13 @@ void loop() {
 
     if (now - lastPrintMs >= SERIAL_PRINT_INTERVAL_MS) {
         lastPrintMs = now;
-        float rA = ldrResistance(rawA);
-        float rB = ldrResistance(rawB);
         const char* status = fabsf(error_deg) < TILT_PID_DEADBAND_DEG ? "BALANCED"
                            : error_deg > 0                             ? "=> tilt right"
                                                                        : "=> tilt left";
-        Serial.printf("A:%4d(%.0f ohm)  B:%4d(%.0f ohm)  err:%+.2f deg  pulse:%d us  %s\n",
-                      rawA, rA, rawB, rB, error_deg, pulse, status);
+        Serial.printf("A:%4d(%.0f ohm / %.1f lux)  B:%4d(%.0f ohm / %.1f lux)  err:%+.2f deg  pulse:%d us  %s\n",
+                      rawA, ldrA.resistanceOhms(), ldrA.lux(),
+                      rawB, ldrB.resistanceOhms(), ldrB.lux(),
+                      error_deg, pulse, status);
         Serial.printf("  Encoder: raw=%u  angle=%.2f deg\n", rawCounts, angleDeg);
     }
 
