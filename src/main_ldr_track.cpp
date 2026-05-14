@@ -25,8 +25,8 @@ static HalAs5600      encoder;
 // LDR 1 (A0, black wire): A=4.8641e5, gamma=0.5882  R²=0.9885
 // LDR 2 (A1, red wire):   A=2.7794e5, gamma=0.4798  R²=0.9938
 // ---------------------------------------------------------------------------
-static HalLdr ldrA(A0, 4.8641e5f, 0.5882f);
-static HalLdr ldrB(A1, 2.7794e5f, 0.4798f);
+static HalLdr ldrA(A1, 4.8641e5f, 0.5882f);
+static HalLdr ldrB(A2, 2.7794e5f, 0.4798f);
 
 // ---------------------------------------------------------------------------
 // PID — error in degrees (ADC diff * SENSOR_TRACK_GAIN)
@@ -147,7 +147,7 @@ void loop() {
 
     int      rawA      = ldrA.read();
     int      rawB      = ldrB.read();
-    float    error_deg = static_cast<float>(rawA - rawB) * SENSOR_TRACK_GAIN;
+    float    error_deg = static_cast<float>(rawA - rawB) * 1; 
     float    angleDeg  = encoder.readAngleDegrees();
     uint16_t rawCounts = encoder.readRawCounts();
 
