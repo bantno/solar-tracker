@@ -12,10 +12,10 @@
 #include "hal/hal_as5600.h"
 #include "hal/hal_ldr.h"
 
-static constexpr uint32_t LOG_MS    = 100;
-static constexpr char     LOG_FILE[] = "encoder_log.csv";
+static constexpr uint32_t LOG_MS = 2000;
 
-static bool sdReady = false;
+static bool sdReady  = false;
+static char logFile[24];  // e.g. "log1.csv", "log99.csv"
 
 static HalGreenJayEsc wingEsc(PIN_ESC_PWM);
 static HalAs5600      encoder;
@@ -68,7 +68,7 @@ static void logEncoderToSD(uint32_t t_ms,
                            float angleDeg,
                            float error_deg,
                            uint16_t pulse) {
-    File f = SD.open(LOG_FILE, FILE_WRITE);
+    File f = SD.open(logFile, FILE_WRITE);
     if (!f) {
         Serial.println("[SD] open failed");
         return;
@@ -113,14 +113,19 @@ void setup() {
 
     sdReady = SD.begin(BUILTIN_SDCARD);
     if (sdReady) {
-        if (!SD.exists(LOG_FILE)) {
-            File f = SD.open(LOG_FILE, FILE_WRITE);
-            if (f) {
-                f.println("t_s,raw_counts,angle_deg,error_deg,pulse_us");
-                f.close();
-            }
+        // Find the next unused log number (log1.csv, log2.csv, ...)
+        int logNum = 1;
+        do {
+            snprintf(logFile, sizeof(logFile), "log%d.csv", logNum++);
+        } while (SD.exists(logFile));
+
+        // Create the new file with a header row
+        File f = SD.open(logFile, FILE_WRITE);
+        if (f) {
+            f.println("t_s,raw_counts,angle_deg,error_deg,pulse_us");
+            f.close();
         }
-        Serial.println("[SD] ready");
+        Serial.printf("[SD] logging to %s\n", logFile);
     } else {
         Serial.println("[SD] not found — logging disabled");
     }
