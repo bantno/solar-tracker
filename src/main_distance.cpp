@@ -5,6 +5,10 @@
 static SparkFunXM125Distance radar;
 static uint32_t lastSampleMs = 0;
 
+// Onboard WS2812 RGB LED (IO18) used as a serial-independent status channel.
+static const uint8_t RGB_PIN = 18;
+static inline void rgb(uint8_t r, uint8_t g, uint8_t b) { neopixelWrite(RGB_PIN, r, g, b); }
+
 static void printPeak(uint8_t idx, uint32_t distMm, int32_t strength) {
     if (distMm == 0) return;
     Serial.print("[DIST] peak="); Serial.print(idx);
@@ -48,19 +52,30 @@ static void runDetector() {
 }
 
 void setup() {
+    // RGB status (works without serial): WHITE == reached setup().
+    rgb(40, 40, 40);
+
     Serial.begin(115200);
-    while (!Serial && millis() < 3000) {}
+    // ESP32-S2 native USB re-enumerates when the app's CDC comes up; give the
+    // host time to (re)attach so the banner isn't lost during enumeration.
+    while (!Serial && millis() < 8000) {}
+    delay(200);
     Serial.println("=== XM125 Distance Node ===");
 
-    Wire.begin();
+    // YELLOW == about to init I2C / talk to the radar.
+    rgb(40, 40, 0);
+    Wire.begin(DISTANCE_I2C_SDA, DISTANCE_I2C_SCL);
 
     if (!radar.begin()) {
         Serial.println("[DIST] ERROR: sensor not found — halting");
-        while (1);
+        // Solid RED forever == radar.begin() failed (I2C / wiring / pins).
+        while (1) { rgb(80, 0, 0); delay(100); }
     }
 
     if (radar.distanceSetup(DISTANCE_BEGIN_MM, DISTANCE_END_MM) != ksfTkErrOk) {
         Serial.println("[DIST] ERROR: distance setup failed");
+        // MAGENTA == sensor found but distanceSetup() failed.
+        rgb(60, 0, 60);
     }
 
     Serial.print("[DIST] range=");
@@ -72,5 +87,8 @@ void loop() {
     uint32_t now = millis();
     if ((now - lastSampleMs) < DISTANCE_SAMPLE_MS) return;
     lastSampleMs = now;
+    // BLUE blip each loop == loop() is alive and scanning.
+    rgb(0, 0, 60); delay(20); rgb(0, 10, 0);
+    Serial.print("[DIST] t="); Serial.print(now); Serial.println("ms scanning...");
     runDetector();
 }

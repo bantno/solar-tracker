@@ -138,7 +138,7 @@ constexpr uint32_t TRACKING_INTERVAL_MS = 900000;   // 15 min target computation
 constexpr float    TILT_PID_KP          = 0.2f;
 constexpr float    TILT_PID_KI          = 0.01f;
 constexpr float    TILT_PID_KD          = 0.0f;
-constexpr float    TILT_PID_KAW         = 0.0f;     // Anti-windup gain
+constexpr float    TILT_PID_KAW         = 1.0f;     // Anti-windup gain
 constexpr uint16_t TILT_PID_OUT_MIN     = 1100;     // = PWM_PULSE_MIN_US
 constexpr uint16_t TILT_PID_OUT_MAX     = 1900;     // = PWM_PULSE_MAX_US
 constexpr float    TILT_PID_DEADBAND_DEG = 0.01f;
@@ -192,5 +192,8 @@ constexpr uint32_t TILT_ARM_PHASE2_MS         = 1500; // Hold low pulse for 1.5 
 constexpr uint32_t DISTANCE_BEGIN_MM  = 300;   // Min range (mm)
 constexpr uint32_t DISTANCE_END_MM    = 7000;  // Max range (mm)
 constexpr uint32_t DISTANCE_SAMPLE_MS = 500;   // Polling interval
+constexpr uint8_t DISTANCE_I2C_SDA = 33;
+constexpr uint8_t DISTANCE_I2C_SCL = 35;
+
 
 #endif // CONFIG_H
